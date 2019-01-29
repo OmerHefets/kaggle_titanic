@@ -9,6 +9,10 @@ def load_titanic_data():
     return pd.read_csv('titanic_train.csv')
 
 
+def load_titanic_test():
+    return pd.read_csv('titanic_test.csv')
+
+
 def extract_y_from_data(data, y_label):
     if y_label not in list(data):
         exit("Label not found in extract_y_from_data")
@@ -17,7 +21,7 @@ def extract_y_from_data(data, y_label):
     return X, y
 
 
-def titanic_data_cleaning(data, fill_na_median, feature_scaling):
+def titanic_data_cleaning(data, test, embarked, fill_na_median, feature_scaling):
     # not enough cabins data
     data = data.drop("Cabin", axis=1)
     # not useful
@@ -27,7 +31,11 @@ def titanic_data_cleaning(data, fill_na_median, feature_scaling):
     # might be useful, but this is a basic exercise
     data = data.drop("Ticket", axis=1)
     # 2 NA values in 'Embarked', removed them
-    data = data.dropna(subset=["Embarked"])
+    if embarked:
+        na_indexes = np.where(data['Embarked'].isnull())[0]
+        for index in na_indexes:
+            test = test.drop(index)
+        data = data.dropna(subset=["Embarked"])
     # using median values for the missing ages
     if fill_na_median:
         age_median = data["Age"].median()
@@ -39,7 +47,7 @@ def titanic_data_cleaning(data, fill_na_median, feature_scaling):
     if feature_scaling:
         scaler = StandardScaler()
         data = pd.DataFrame(scaler.fit_transform(data), columns=data.columns)
-    return data
+    return data, test
 
 
 def oneHotEncoding(data, vector):
@@ -62,12 +70,16 @@ def oneHotEncoding(data, vector):
 
 
 titanic_data = load_titanic_data()
+titanic_test = load_titanic_test()
 X_train, y_train = extract_y_from_data(titanic_data, "Survived")
-X_train = titanic_data_cleaning(X_train, fill_na_median=True, feature_scaling=True)
+# clean data
+X_train, y_train = titanic_data_cleaning(X_train, y_train, embarked=True, fill_na_median=True, feature_scaling=True)
+# clean test set
+titanic_test, _ = titanic_data_cleaning(titanic_test, 42, embarked=False, fill_na_median=True, feature_scaling=False)
 print(X_train.info())
+print(titanic_test.info())
 
 
-"""
 lin_reg = LinearRegression()
 lin_reg.fit(X_train, y_train)
-"""
+
