@@ -2,7 +2,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import SGDClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import confusion_matrix, precision_score, recall_score
+import titanic_tests
 
 
 def load_titanic_data():
@@ -75,11 +78,13 @@ X_train, y_train = extract_y_from_data(titanic_data, "Survived")
 # clean data
 X_train, y_train = titanic_data_cleaning(X_train, y_train, embarked=True, fill_na_median=True, feature_scaling=True)
 # clean test set
-titanic_test, _ = titanic_data_cleaning(titanic_test, 42, embarked=False, fill_na_median=True, feature_scaling=False)
-print(X_train.info())
+titanic_test, _ = titanic_data_cleaning(titanic_test, 42, embarked=False, fill_na_median=True, feature_scaling=True)
 print(titanic_test.info())
+print(titanic_test.head())
 
-
-lin_reg = LinearRegression()
-lin_reg.fit(X_train, y_train)
-
+SGD_classifier = SGDClassifier(random_state=42)
+SGD_classifier.fit(X_train, y_train)
+results = SGD_classifier.predict(titanic_test)
+results = results.reshape(-1, 1)
+np.savetxt("results.csv", results, delimiter=",")
+# cross_val_score(SGD_classifier, X_train, y_train, cv=5, scoring="accuracy")
